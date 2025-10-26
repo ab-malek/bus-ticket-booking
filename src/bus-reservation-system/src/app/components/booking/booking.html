@@ -1,0 +1,189 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+          <li class="breadcrumb-item"><a routerLink="/search">Search</a></li>
+          <li class="breadcrumb-item"><a [routerLink]="['/seat-layout', busId]">Seat Selection</a></li>
+          <li class="breadcrumb-item active">Passenger Details</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading booking form...</p>
+  </div>
+
+  <!-- Booking Form -->
+  <div *ngIf="!loading && bus">
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Journey Details</h3>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <p><strong>Bus:</strong> {{ bus.busName }} ({{ bus.busType }})</p>
+                <p><strong>Bus Number:</strong> {{ bus.busNumber }}</p>
+              </div>
+              <div class="col-md-4">
+                <p><strong>From:</strong> {{ bus.departureCity }}</p>
+                <p><strong>To:</strong> {{ bus.arrivalCity }}</p>
+                <p><strong>Date:</strong> {{ bus.journeyDate }}</p>
+              </div>
+              <div class="col-md-4">
+                <p><strong>Departure:</strong> {{ bus.departureTime }}</p>
+                <p><strong>Arrival:</strong> {{ bus.arrivalTime }}</p>
+                <p><strong>Selected Seats:</strong> 
+                  <span *ngFor="let seat of selectedSeats; let last = last">
+                    {{ seat.seatNumber }}{{ !last ? ', ' : '' }}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passenger Details Form -->
+    <form (ngSubmit)="confirmBooking()">
+      <div class="row">
+        <div class="col-md-8">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+              <h3 class="mb-0">Passenger Details</h3>
+            </div>
+            <div class="card-body">
+              <!-- Passenger Information -->
+              <div *ngFor="let passenger of passengers; let i = index" class="mb-4 pb-3 border-bottom">
+                <h5 class="mb-3">Passenger {{ i+1 }} - Seat {{ passenger.seatNumber }}</h5>
+                
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label for="name{{i}}" class="form-label">Full Name</label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="name{{i}}" 
+                      [(ngModel)]="passenger.name" 
+                      name="name{{i}}" 
+                      required
+                    >
+                  </div>
+                  
+                  <div class="col-md-3">
+                    <label for="age{{i}}" class="form-label">Age</label>
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="age{{i}}" 
+                      [(ngModel)]="passenger.age" 
+                      name="age{{i}}" 
+                      min="1" 
+                      required
+                    >
+                  </div>
+                  
+                  <div class="col-md-3">
+                    <label for="gender{{i}}" class="form-label">Gender</label>
+                    <select 
+                      class="form-select" 
+                      id="gender{{i}}" 
+                      [(ngModel)]="passenger.gender" 
+                      name="gender{{i}}" 
+                      required
+                    >
+                      <option value="" disabled>Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Contact Information -->
+              <h5 class="mb-3 mt-4">Contact Information</h5>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="contactEmail" class="form-label">Email Address</label>
+                  <input 
+                    type="email" 
+                    class="form-control" 
+                    id="contactEmail" 
+                    [(ngModel)]="contactEmail" 
+                    name="contactEmail" 
+                    required
+                  >
+                  <div class="form-text">Booking confirmation will be sent to this email</div>
+                </div>
+                
+                <div class="col-md-6">
+                  <label for="contactPhone" class="form-label">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    class="form-control" 
+                    id="contactPhone" 
+                    [(ngModel)]="contactPhone" 
+                    name="contactPhone" 
+                    required
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Booking Summary -->
+        <div class="col-md-4">
+          <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+              <h3 class="mb-0">Booking Summary</h3>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Number of Seats:</span>
+                <span>{{ selectedSeats.length }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Fare per Seat:</span>
+                <span>${{ bus.fare }}</span>
+              </div>
+              <hr>
+              <div class="d-flex justify-content-between mb-2 fs-5 fw-bold">
+                <span>Total Amount:</span>
+                <span class="text-success">${{ bus.fare * selectedSeats.length }}</span>
+              </div>
+              
+              <div class="d-grid gap-2 mt-4">
+                <button type="submit" class="btn btn-success">
+                  <i class="bi bi-check-circle me-2"></i> Confirm Booking
+                </button>
+                <button type="button" class="btn btn-outline-secondary" [routerLink]="['/seat-layout', busId]">
+                  <i class="bi bi-arrow-left me-2"></i> Back to Seat Selection
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Payment Notes -->
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5><i class="bi bi-info-circle me-2"></i> Payment Information</h5>
+              <p class="small mb-0">This is a demo application. No actual payment will be processed. Click "Confirm Booking" to simulate a successful booking.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

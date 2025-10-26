@@ -1,0 +1,95 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <h2 class="my-4">Search Buses</h2>
+    </div>
+  </div>
+
+  <!-- Search Form -->
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <form (ngSubmit)="searchBuses()">
+            <div class="row mb-3">
+              <div class="col-md-4 mb-3 mb-md-0">
+                <label for="departureCity" class="form-label">From</label>
+                <select id="departureCity" class="form-select" [(ngModel)]="departureCity" name="departureCity" required>
+                  <option value="" disabled>Select departure city</option>
+                  <option *ngFor="let city of availableCities" [value]="city">{{ city }}</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3 mb-md-0">
+                <label for="arrivalCity" class="form-label">To</label>
+                <select id="arrivalCity" class="form-select" [(ngModel)]="arrivalCity" name="arrivalCity" required>
+                  <option value="" disabled>Select arrival city</option>
+                  <option *ngFor="let city of availableCities" [value]="city">{{ city }}</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label for="journeyDate" class="form-label">Date</label>
+                <input type="date" id="journeyDate" class="form-control" [(ngModel)]="journeyDate" name="journeyDate" [min]="today" required>
+              </div>
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-search me-2"></i> Search Buses
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Results -->
+  <div class="row mt-4" *ngIf="searchPerformed">
+    <div class="col-12">
+      <!-- Loading indicator -->
+      <div class="text-center" *ngIf="loading">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Searching for buses...</p>
+      </div>
+
+      <!-- No results message -->
+      <div class="alert alert-info" *ngIf="!loading && buses.length === 0">
+        <i class="bi bi-info-circle me-2"></i>
+        No buses found for the selected route and date. Please try different options.
+      </div>
+      
+      <!-- Results listing -->
+      <div *ngIf="!loading && buses.length > 0">
+        <h3>Available Buses</h3>
+        <p class="text-muted">{{ departureCity }} to {{ arrivalCity }} | {{ journeyDate }}</p>
+        
+        <div class="card mb-3 shadow-sm" *ngFor="let bus of buses">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-8">
+                <h4 class="card-title">{{ bus.busName }} <span class="badge bg-secondary ms-2">{{ bus.busType }}</span></h4>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p class="mb-0"><strong>Bus Number:</strong> {{ bus.busNumber }}</p>
+                    <p class="mb-0"><strong>Departure:</strong> {{ bus.departureTime }}</p>
+                    <p class="mb-0"><strong>Arrival:</strong> {{ bus.arrivalTime }}</p>
+                  </div>
+                  <div class="col-md-6">
+                    <p class="mb-0"><strong>Available Seats:</strong> {{ bus.availableSeats }}/{{ bus.totalSeats }}</p>
+                    <p class="mb-0 text-success fw-bold">Fare: ${{ bus.fare }}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <a [routerLink]="['/seat-layout', bus.id]" class="btn btn-outline-primary">
+                  <i class="bi bi-grid-3x3 me-2"></i> Select Seats
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

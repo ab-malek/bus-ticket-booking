@@ -1,0 +1,138 @@
+<div class="container" id="printableArea">
+  <div class="row my-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb" class="d-print-none">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+          <li class="breadcrumb-item active">Booking Confirmation</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading booking details...</p>
+  </div>
+
+  <!-- Booking Confirmed -->
+  <div *ngIf="booking" class="mb-5">
+    <!-- Success Message -->
+    <div class="text-center mb-4 d-print-none">
+      <div class="display-1 text-success">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <h1 class="display-5 fw-bold text-success">Booking Confirmed!</h1>
+      <p class="lead">Your bus tickets have been successfully booked.</p>
+    </div>
+
+    <!-- E-Ticket -->
+    <div class="card shadow border-success mb-4">
+      <div class="card-header bg-success text-white">
+        <div class="d-flex justify-content-between align-items-center">
+          <h3 class="mb-0">E-Ticket</h3>
+          <div>
+            <span class="badge bg-light text-dark">Booking ID: {{ booking.id }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Bus & Journey Details -->
+        <div class="row mb-4">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <h4 class="h5 border-bottom pb-2 mb-3">Journey Details</h4>
+            <p class="mb-1"><strong>Bus Name:</strong> {{ booking.busName }}</p>
+            <p class="mb-1"><strong>From:</strong> {{ booking.departureCity }}</p>
+            <p class="mb-1"><strong>To:</strong> {{ booking.arrivalCity }}</p>
+            <p class="mb-1"><strong>Date:</strong> {{ booking.journeyDate }}</p>
+            <p class="mb-1"><strong>Departure Time:</strong> {{ booking.departureTime }}</p>
+            <p class="mb-1"><strong>Arrival Time:</strong> {{ booking.arrivalTime }}</p>
+          </div>
+          <div class="col-md-6">
+            <h4 class="h5 border-bottom pb-2 mb-3">Booking Details</h4>
+            <p class="mb-1"><strong>Booking Status:</strong> <span class="badge bg-success">{{ booking.bookingStatus }}</span></p>
+            <p class="mb-1"><strong>Booking Date:</strong> {{ booking.bookingDate | date:'medium' }}</p>
+            <p class="mb-1"><strong>Total Amount Paid:</strong> <span class="fw-bold">${{ booking.totalFare }}</span></p>
+            <p class="mb-1"><strong>Contact Email:</strong> {{ booking.contactEmail }}</p>
+            <p class="mb-1"><strong>Contact Phone:</strong> {{ booking.contactPhone }}</p>
+          </div>
+        </div>
+
+        <!-- Passenger Details -->
+        <h4 class="h5 border-bottom pb-2 mb-3">Passenger Details</h4>
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>No.</th>
+                <th>Passenger Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Seat Number</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let passenger of booking.passengers; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ passenger.name }}</td>
+                <td>{{ passenger.age }}</td>
+                <td>{{ passenger.gender }}</td>
+                <td><strong>{{ passenger.seatNumber }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Important Information -->
+        <div class="bg-light p-3 rounded mt-4">
+          <h5><i class="bi bi-info-circle me-2"></i> Important Information</h5>
+          <ul class="small mb-0">
+            <li>Please arrive at the boarding point at least 15 minutes before departure.</li>
+            <li>Carry a printed copy or digital copy of this ticket along with valid ID proof.</li>
+            <li>Luggage allowance: 20kg per passenger.</li>
+            <li>For cancellations or queries, contact our customer support.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card-footer text-center">
+        <small>This is a computer generated e-ticket and does not require a physical signature.</small>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-center gap-3 d-print-none">
+      <button class="btn btn-primary" (click)="printTicket()">
+        <i class="bi bi-printer me-2"></i> Print Ticket
+      </button>
+      <a routerLink="/" class="btn btn-outline-secondary">
+        <i class="bi bi-house me-2"></i> Back to Home
+      </a>
+    </div>
+  </div>
+
+  <!-- Simple Success Message (when no booking data) -->
+  <div *ngIf="!booking && bookingId" class="text-center my-5">
+    <div class="display-1 text-success">
+      <i class="bi bi-check-circle"></i>
+    </div>
+    <h1 class="display-5 fw-bold text-success">Booking Confirmed!</h1>
+    <p class="lead">Your bus tickets have been successfully booked.</p>
+    <p class="text-muted">Booking ID: {{ bookingId }}</p>
+    <a routerLink="/" class="btn btn-primary mt-3">
+      <i class="bi bi-house me-2"></i> Go to Home
+    </a>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!loading && !booking && !bookingId" class="text-center my-5">
+    <div class="display-1 text-danger">
+      <i class="bi bi-exclamation-triangle"></i>
+    </div>
+    <h2>Booking Not Found</h2>
+    <p>Sorry, we couldn't find the booking details you're looking for.</p>
+    <a routerLink="/" class="btn btn-primary mt-3">Go to Home</a>
+  </div>
+</div>

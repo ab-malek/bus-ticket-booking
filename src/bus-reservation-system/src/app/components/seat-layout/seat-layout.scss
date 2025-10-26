@@ -1,0 +1,119 @@
+// Bus seats wrapper - creates the bus layout
+.bus-seats-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+// Each row in the bus
+.seat-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+// Seat groups (left and right sides)
+.seat-group-left,
+.seat-group-right {
+  display: flex;
+  gap: 8px;
+}
+
+// Individual seat styling
+.seat {
+  width: 45px;
+  height: 45px;
+  border-radius: 8px;
+  background-color: #28a745; // Green for available
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  &.available {
+    background-color: #28a745; // Green
+  }
+  
+  &.booked {
+    background-color: #dc3545; // Red
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+  
+  &.selected {
+    background-color: #007bff; // Blue
+    transform: scale(1.1);
+    border-color: #0056b3;
+    box-shadow: 0 4px 8px rgba(0,123,255,0.4);
+  }
+  
+  &.available:hover:not(.selected) {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(40,167,69,0.4);
+    border-color: #1e7e34;
+  }
+  
+  &.booked:hover {
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+}
+
+// Aisle in the middle
+.aisle {
+  height: 45px;
+  width: 40px;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, 
+      transparent 0%, 
+      #dee2e6 20%, 
+      #dee2e6 80%, 
+      transparent 100%);
+    transform: translateX(-50%);
+  }
+}
+
+.bus-front {
+  width: 150px;
+}
+
+.seat-legend {
+  .seat-sample {
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
+    border: 2px solid #dee2e6;
+    
+    &.available {
+      background-color: #28a745;
+    }
+    
+    &.booked {
+      background-color: #dc3545;
+    }
+    
+    &.selected {
+      background-color: #007bff;
+    }
+  }
+}

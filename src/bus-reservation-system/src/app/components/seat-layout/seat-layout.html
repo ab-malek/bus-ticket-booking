@@ -1,0 +1,188 @@
+<div class="container">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a routerLink="/">Home</a></li>
+          <li class="breadcrumb-item"><a routerLink="/search">Search</a></li>
+          <li class="breadcrumb-item active">Seat Selection</li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div class="text-center my-5" *ngIf="loading">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading seat layout...</p>
+  </div>
+
+  <!-- Bus Details -->
+  <div *ngIf="!loading && bus">
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow-sm mb-4">
+          <div class="card-body">
+            <h3 class="card-title">{{ bus.busName }} <span class="badge bg-secondary ms-2">{{ bus.busType }}</span></h3>
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-1"><strong>From:</strong> {{ bus.departureCity || 'N/A' }}</p>
+                <p class="mb-1"><strong>To:</strong> {{ bus.arrivalCity || 'N/A' }}</p>
+                <p class="mb-1"><strong>Date:</strong> {{ bus.journeyDate }}</p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Departure:</strong> {{ bus.departureTime }}</p>
+                <p class="mb-1"><strong>Arrival:</strong> {{ bus.arrivalTime }}</p>
+                <p class="mb-1 text-success fw-bold">Fare: ${{ bus.fare }} per seat</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seat Layout -->
+    <div class="row">
+      <div class="col-md-8">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Select Your Seats</h4>
+          </div>
+          <div class="card-body">
+            <!-- Bus Front -->
+            <div class="text-center mb-4">
+              <div class="bus-front p-2 rounded bg-secondary text-white d-inline-block">
+                <i class="bi bi-truck fs-3"></i> Driver
+              </div>
+            </div>
+
+            <!-- Seat Layout Grid -->
+            <div class="seat-layout" *ngIf="seatLayout && seatLayout.seats">
+              <div class="seat-container">
+                <!-- Create bus-like layout with 2-2 seating (2 left, aisle, 2 right) -->
+                <div class="bus-seats-wrapper">
+                  <div class="seat-row" *ngFor="let row of getSeatsInRows()">
+                    <!-- Left side seats (2 seats) -->
+                    <div class="seat-group-left">
+                      <div class="seat"
+                           *ngIf="row[0]"
+                           [class.booked]="row[0].isBooked"
+                           [class.selected]="row[0].isSelected"
+                           [class.available]="!row[0].isBooked"
+                           (click)="toggleSeatSelection(row[0])"
+                           [title]="row[0].isBooked ? 'Booked' : 'Click to select'">
+                        {{ row[0].seatNumber }}
+                      </div>
+                      <div class="seat"
+                           *ngIf="row[1]"
+                           [class.booked]="row[1].isBooked"
+                           [class.selected]="row[1].isSelected"
+                           [class.available]="!row[1].isBooked"
+                           (click)="toggleSeatSelection(row[1])"
+                           [title]="row[1].isBooked ? 'Booked' : 'Click to select'">
+                        {{ row[1].seatNumber }}
+                      </div>
+                    </div>
+
+                    <!-- Aisle -->
+                    <div class="aisle"></div>
+
+                    <!-- Right side seats (2 seats) -->
+                    <div class="seat-group-right">
+                      <div class="seat"
+                           *ngIf="row[2]"
+                           [class.booked]="row[2].isBooked"
+                           [class.selected]="row[2].isSelected"
+                           [class.available]="!row[2].isBooked"
+                           (click)="toggleSeatSelection(row[2])"
+                           [title]="row[2].isBooked ? 'Booked' : 'Click to select'">
+                        {{ row[2].seatNumber }}
+                      </div>
+                      <div class="seat"
+                           *ngIf="row[3]"
+                           [class.booked]="row[3].isBooked"
+                           [class.selected]="row[3].isSelected"
+                           [class.available]="!row[3].isBooked"
+                           (click)="toggleSeatSelection(row[3])"
+                           [title]="row[3].isBooked ? 'Booked' : 'Click to select'">
+                        {{ row[3].seatNumber }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seat Legend -->
+            <div class="seat-legend mt-4">
+              <div class="d-flex justify-content-center gap-4">
+                <div class="d-flex align-items-center">
+                  <div class="seat-sample available"></div>
+                  <span class="ms-2">Available</span>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div class="seat-sample booked"></div>
+                  <span class="ms-2">Booked</span>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div class="seat-sample selected"></div>
+                  <span class="ms-2">Selected</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Seats Summary -->
+      <div class="col-md-4">
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Your Selection</h4>
+          </div>
+          <div class="card-body">
+            <div *ngIf="selectedSeats.length === 0" class="text-center py-3">
+              <i class="bi bi-info-circle fs-1 text-muted"></i>
+              <p class="mt-2">No seats selected yet. Click on available seats to select them.</p>
+            </div>
+
+            <div *ngIf="selectedSeats.length > 0">
+              <h5>Selected Seats:</h5>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <span *ngFor="let seat of selectedSeats" class="badge bg-success">{{ seat.seatNumber }}</span>
+              </div>
+
+              <hr />
+
+              <div class="d-flex justify-content-between">
+                <p><strong>Number of Seats:</strong></p>
+                <p>{{ selectedSeats.length }}</p>
+              </div>
+
+              <div class="d-flex justify-content-between" *ngIf="bus">
+                <p><strong>Fare per Seat:</strong></p>
+                <p>${{ bus.fare }}</p>
+              </div>
+
+              <div class="d-flex justify-content-between" *ngIf="bus">
+                <p><strong>Total Amount:</strong></p>
+                <p class="fs-5 text-success fw-bold">${{ bus.fare * selectedSeats.length }}</p>
+              </div>
+
+              <div class="d-grid gap-2 mt-4">
+                <button class="btn btn-primary" (click)="proceedToBooking()">
+                  Proceed to Booking
+                </button>
+                <button class="btn btn-outline-secondary" routerLink="/search">
+                  Change Bus
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
