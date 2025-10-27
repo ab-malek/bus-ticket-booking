@@ -75,13 +75,20 @@ export class BusService {
     return this.http.get<any>(`${this.apiUrl}/booking/seat-plan/${busScheduleId}`).pipe(
       map(dto => {
         console.log('BusService.getSeatLayout - Raw DTO:', dto);
-        const seats = dto.seats.map((seat: any) => ({
-          id: seat.seatId, // Use the actual GUID from backend
-          seatNumber: seat.seatNumber,
-          isBooked: seat.status !== 0,
-          isSelected: false,
-          isSold: seat.status === 2
-        }));
+        const seats = dto.seats
+          .map((seat: any) => ({
+            id: seat.seatId, // Use the actual GUID from backend
+            seatNumber: seat.seatNumber,
+            isBooked: seat.status !== 0,
+            isSelected: false,
+            isSold: seat.status === 2
+          }))
+          // Sort seats by seat number (convert to number for proper sorting)
+          .sort((a: any, b: any) => {
+            const numA = parseInt(a.seatNumber, 10);
+            const numB = parseInt(b.seatNumber, 10);
+            return numA - numB;
+          });
         
         const layout: SeatLayout = {
           busId: dto.busScheduleId,

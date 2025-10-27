@@ -26,6 +26,7 @@ builder.Services.AddScoped<IBusScheduleRepository, BusScheduleRepository>();
 builder.Services.AddScoped<ISeatRepository, SeatRepository>();
 builder.Services.AddScoped<IPassengerRepository, PassengerRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 // Register Domain Services
 builder.Services.AddScoped<ISeatBookingDomainService, SeatBookingDomainService>();

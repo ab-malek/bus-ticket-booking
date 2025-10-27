@@ -2,6 +2,7 @@ using Application.Contracts.DTOs;
 using Application.Contracts.Repositories;
 using Domain.Entities;
 using Domain.Services;
+using System.Data;
 
 namespace Application.Services;
 
@@ -18,19 +19,22 @@ public class BookingService : IBookingService
     private readonly IPassengerRepository _passengerRepository;
     private readonly ITicketRepository _ticketRepository;
     private readonly ISeatBookingDomainService _seatBookingDomainService;
+    private readonly IUnitOfWork _unitOfWork;
 
     public BookingService(
         IBusScheduleRepository busScheduleRepository,
         ISeatRepository seatRepository,
         IPassengerRepository passengerRepository,
         ITicketRepository ticketRepository,
-        ISeatBookingDomainService seatBookingDomainService)
+        ISeatBookingDomainService seatBookingDomainService,
+        IUnitOfWork unitOfWork)
     {
         _busScheduleRepository = busScheduleRepository;
         _seatRepository = seatRepository;
         _passengerRepository = passengerRepository;
         _ticketRepository = ticketRepository;
         _seatBookingDomainService = seatBookingDomainService;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<SeatPlanDto> GetSeatPlanAsync(Guid busScheduleId)
@@ -75,59 +79,83 @@ public class BookingService : IBookingService
             if (input.SeatId == Guid.Empty)
                 return new BookSeatResultDto { Success = false, Message = "Invalid seat" };
 
-            // Get seat with details
-            var seat = await _seatRepository.GetWithDetailsAsync(input.SeatId);
-            if (seat == null)
-                return new BookSeatResultDto { Success = false, Message = "Seat not found" };
+            // Begin transaction with Serializable isolation level to prevent race conditions
+            // This ensures no other transaction can read or modify the seat until this transaction completes
+            await _unitOfWork.BeginTransactionAsync(IsolationLevel.Serializable);
 
-            // Check if seat is available using domain service
-            if (!_seatBookingDomainService.CanBookSeat(seat))
+            try
+            {
+                // Get seat with details - this will lock the row for the transaction
+                var seat = await _seatRepository.GetWithDetailsAsync(input.SeatId);
+                if (seat == null)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    return new BookSeatResultDto { Success = false, Message = "Seat not found" };
+                }
+
+                // Check if seat is available using domain service
+                if (!_seatBookingDomainService.CanBookSeat(seat))
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    return new BookSeatResultDto
+                    {
+                        Success = false,
+                        Message = $"Seat {seat.SeatNumber} is not available. Current status: {seat.Status}"
+                    };
+                }
+
+                // Get or create passenger
+                var passenger = await _passengerRepository.FindByMobileNumberAsync(input.MobileNumber);
+                if (passenger == null)
+                {
+                    passenger = new Passenger(input.PassengerName, input.MobileNumber, input.Email);
+                    await _passengerRepository.AddAsync(passenger);
+                }
+
+                // Get bus schedule to get fare
+                var busSchedule = await _busScheduleRepository.GetByIdAsync(input.BusScheduleId);
+                if (busSchedule == null)
+                {
+                    await _unitOfWork.RollbackTransactionAsync();
+                    return new BookSeatResultDto { Success = false, Message = "Bus schedule not found" };
+                }
+
+                // Book seat using domain service
+                var ticket = await _seatBookingDomainService.BookSeatAsync(
+                    seat,
+                    passenger,
+                    input.BoardingPoint,
+                    input.DroppingPoint,
+                    busSchedule.Fare);
+
+                // Confirm the ticket
+                ticket.Confirm();
+
+                // Mark seat as sold
+                seat.MarkAsSold();
+
+                // Save ticket and seat
+                await _ticketRepository.AddAsync(ticket);
+                await _seatRepository.UpdateAsync(seat);
+
+                // Commit transaction - this releases the locks
+                await _unitOfWork.CommitTransactionAsync();
+
                 return new BookSeatResultDto
                 {
-                    Success = false,
-                    Message = $"Seat {seat.SeatNumber} is not available. Current status: {seat.Status}"
+                    Success = true,
+                    Message = "Seat booked successfully",
+                    BookingReference = ticket.BookingReference,
+                    TicketId = ticket.Id,
+                    TotalAmount = ticket.TotalAmount
                 };
-
-            // Get or create passenger
-            var passenger = await _passengerRepository.FindByMobileNumberAsync(input.MobileNumber);
-            if (passenger == null)
-            {
-                passenger = new Passenger(input.PassengerName, input.MobileNumber, input.Email);
-                await _passengerRepository.AddAsync(passenger);
             }
-
-            // Get bus schedule to get fare
-            var busSchedule = await _busScheduleRepository.GetByIdAsync(input.BusScheduleId);
-            if (busSchedule == null)
-                return new BookSeatResultDto { Success = false, Message = "Bus schedule not found" };
-
-            // Book seat using domain service
-            var ticket = await _seatBookingDomainService.BookSeatAsync(
-                seat,
-                passenger,
-                input.BoardingPoint,
-                input.DroppingPoint,
-                busSchedule.Fare);
-
-            // Confirm the ticket
-            ticket.Confirm();
-
-            // Mark seat as sold
-            seat.MarkAsSold();
-
-            // Save ticket
-            await _ticketRepository.AddAsync(ticket);
-            await _seatRepository.UpdateAsync(seat);
-            await _seatRepository.SaveChangesAsync();
-
-            return new BookSeatResultDto
+            catch
             {
-                Success = true,
-                Message = "Seat booked successfully",
-                BookingReference = ticket.BookingReference,
-                TicketId = ticket.Id,
-                TotalAmount = ticket.TotalAmount
-            };
+                // Rollback on any error within the transaction
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
         catch (InvalidOperationException ex)
         {
