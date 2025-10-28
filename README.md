@@ -151,41 +151,6 @@ The frontend will start at: **http://localhost:4200**
 ```
 
 
-## 📁 Project Structure
-
-```
-wafi_solution/
-├── frontend/
-│   └── bus-reservation-system/        # Angular Frontend
-│       ├── src/
-│       │   ├── app/
-│       │   │   ├── components/        # UI Components
-│       │   │   ├── services/          # HTTP Services
-│       │   │   └── models/            # TypeScript Interfaces
-│       │   └── styles.scss
-│       ├── angular.json
-│       └── package.json
-├── src/
-│   ├── Domain/                        # Domain Entities & Business Logic
-│   │   ├── Entities/
-│   │   ├── Enums/
-│   │   └── Services/
-│   ├── Application/                   # Application Services
-│   │   └── Services/
-│   ├── Application.Contracts/         # DTOs & Interfaces
-│   │   ├── DTOs/
-│   │   └── Repositories/
-│   ├── Infrastructure/                # Data Access & External Services
-│   │   ├── Persistence/
-│   │   ├── Repositories/
-│   │   └── Migrations/
-│   └── WebApi/                        # REST API Controllers
-│       ├── Controllers/
-│       ├── Program.cs
-│       └── appsettings.json
-└── README.md
-```
-
 ## 🔌 API Endpoints
 
 ### Search
